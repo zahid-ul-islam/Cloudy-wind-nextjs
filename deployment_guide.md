@@ -24,7 +24,7 @@ This guide will walk you through deploying the **Cloudy Wind** application.
     - **Branch**: `main` (or your default branch).
     - **Root Directory**: `backend` (Important! This tells Render where the backend code lives).
     - **Runtime**: `Node`
-    - **Build Command**: `npm install && npm run build` (Render might auto-detect this).
+    - **Build Command**: `npm install --production=false && npm run build` (Important! The `--production=false` flag ensures TypeScript and type definitions are installed for the build).
     - **Start Command**: `npm start` (Render might auto-detect this).
 5.  **Environment Variables**:
     - Scroll down to the **Environment Variables** section.
