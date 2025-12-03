@@ -32,6 +32,22 @@ app.use(
   })
 );
 
+// Health check / root route
+app.get("/", (_req, res) => {
+  res.json({
+    message: "Cloudy Wind API is running",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      teams: "/api/teams",
+      projects: "/api/projects",
+      tasks: "/api/tasks",
+      columns: "/api/columns",
+      invites: "/api/invites",
+    },
+  });
+});
+
 // Mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/teams", teamRoutes);
