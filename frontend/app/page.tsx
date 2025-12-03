@@ -188,7 +188,7 @@ export default function HomePage() {
         <div className="glass rounded-2xl px-8 py-6">
           <div className="text-center text-slate-600">
             <p className="font-medium">
-              © 2025 Antorikkho. All rights reserved.
+              © 2025 Zahidul Islam. All rights reserved.
               
             </p>
           </div>
