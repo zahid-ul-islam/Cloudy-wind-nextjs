@@ -7,6 +7,7 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCorners,
@@ -45,7 +46,13 @@ export default function KanbanBoard({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3,
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 8,
       },
     })
   );
@@ -106,20 +113,31 @@ export default function KanbanBoard({
           : 0;
     }
 
-    // Update task
+    // Optimistic update - immediately update UI
+    const updatedTasks = tasks.map((task) => {
+      if (task._id === activeTask._id) {
+        return { ...task, column: targetColumnId, order: newOrder };
+      }
+      return task;
+    });
+    onTasksUpdate(updatedTasks);
+
+    // Update task on server in background
     try {
       await api.put(`/tasks/${activeTask._id}/move`, {
         columnId: targetColumnId,
         order: newOrder,
       });
 
-      // Refresh tasks
+      // Refresh tasks to get accurate data from server
       const response = await api.get<Task[]>(
         `/tasks/projects/${projectId}/tasks`
       );
       onTasksUpdate(response.data);
     } catch (error) {
       console.error("Failed to update task:", error);
+      // Revert optimistic update on error
+      onTasksUpdate(tasks);
     }
   };
 
