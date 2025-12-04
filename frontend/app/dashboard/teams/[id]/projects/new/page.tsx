@@ -114,29 +114,6 @@ export default function NewProjectPage() {
               </div>
 
               <div>
-                <label htmlFor="key" className="label">
-                  Project Key *
-                </label>
-                <input
-                  {...register("key")}
-                  type="text"
-                  id="key"
-                  className="input uppercase"
-                  placeholder="WEB"
-                  maxLength={5}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  2-5 uppercase letters. Used for task identifiers (e.g.,
-                  WEB-123)
-                </p>
-                {errors.key && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.key.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
                 <label htmlFor="description" className="label">
                   Description (Optional)
                 </label>

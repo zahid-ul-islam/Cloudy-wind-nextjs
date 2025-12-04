@@ -105,7 +105,7 @@ export const createProject = async (
 ): Promise<void> => {
   const authReq = req as AuthRequest;
   try {
-    const { name, description, key, teamId } = req.body;
+    const { name, description, teamId } = req.body;
 
     // Verify user is team member
     const team = await Team.findById(teamId);
@@ -123,11 +123,38 @@ export const createProject = async (
       return;
     }
 
+    // Auto-generate project key from name
+    // Take first 2-5 characters (letters only) from the project name
+    let baseKey = name
+      .replace(/[^a-zA-Z]/g, "") // Remove non-letters
+      .substring(0, 5)
+      .toUpperCase();
+
+    // Ensure key is at least 2 characters
+    if (baseKey.length < 2) {
+      baseKey = "PRJ"; // Default fallback
+    }
+
+    // Check for uniqueness and append number if needed
+    let key = baseKey;
+    let suffix = 1;
+    let isUnique = false;
+
+    while (!isUnique) {
+      const existingProject = await Project.findOne({ team: teamId, key });
+      if (!existingProject) {
+        isUnique = true;
+      } else {
+        key = `${baseKey}${suffix}`;
+        suffix++;
+      }
+    }
+
     // Create project
     const project = await Project.create({
       name,
       description,
-      key: key.toUpperCase(),
+      key,
       team: teamId,
       createdBy: authReq.user?._id,
     });

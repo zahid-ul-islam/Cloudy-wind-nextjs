@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [projectName, setProjectName] = useState("");
-  const [projectKey, setProjectKey] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,9 +45,8 @@ export default function DashboardPage() {
     try {
       const response = await api.post("/projects", {
         name: projectName,
-        key: projectKey,
         description: projectDescription,
-        team: selectedTeamId,
+        teamId: selectedTeamId,
       });
 
       router.push(`/dashboard/projects/${response.data._id}`);
@@ -207,26 +205,6 @@ export default function DashboardPage() {
                     placeholder="My Awesome Project"
                     required
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Key
-                  </label>
-                  <input
-                    type="text"
-                    value={projectKey}
-                    onChange={(e) =>
-                      setProjectKey(e.target.value.toUpperCase())
-                    }
-                    className="input w-full"
-                    placeholder="MAP"
-                    maxLength={10}
-                    required
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    A short identifier for your project (e.g., MAP, PROJ)
-                  </p>
                 </div>
 
                 <div>

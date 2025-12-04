@@ -19,11 +19,6 @@ export const teamSchema = z.object({
 export const projectSchema = z.object({
   name: z.string().min(2, "Project name must be at least 2 characters"),
   description: z.string().optional(),
-  key: z
-    .string()
-    .min(2, "Key must be at least 2 characters")
-    .max(5, "Key must be at most 5 characters")
-    .regex(/^[A-Z]+$/, "Key must contain only uppercase letters"),
   teamId: z.string().min(1, "Team is required"),
 });
 
