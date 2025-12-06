@@ -65,7 +65,7 @@ export default function RegisterPage() {
                 type="text"
                 id="name"
                 className="input"
-                placeholder="John Doe"
+                placeholder="Enter your name"
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">
