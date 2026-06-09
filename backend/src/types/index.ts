@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   avatar?: string;
+  role?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(enteredPassword: string): Promise<boolean>;
@@ -48,6 +49,21 @@ export interface IColumn extends Document {
   updatedAt: Date;
 }
 
+export interface IComment {
+  user: Types.ObjectId;
+  text: string;
+  createdAt: Date;
+}
+
+export interface IActivity {
+  user: Types.ObjectId;
+  action: string;
+  field?: string;
+  oldValue?: string;
+  newValue?: string;
+  createdAt: Date;
+}
+
 export interface ITask extends Document {
   _id: Types.ObjectId;
   title: string;
@@ -57,9 +73,26 @@ export interface ITask extends Document {
   assignee?: Types.ObjectId;
   reporter: Types.ObjectId;
   priority: "low" | "medium" | "high" | "urgent";
+  type: "task" | "bug" | "story" | "epic";
+  taskNumber: number;
   order: number;
   labels?: string[];
   dueDate?: Date;
+  comments: IComment[];
+  activity: IActivity[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface INotification extends Document {
+  _id: Types.ObjectId;
+  recipient: Types.ObjectId;
+  sender: Types.ObjectId;
+  type: string;
+  message: string;
+  task?: Types.ObjectId;
+  project?: Types.ObjectId;
+  isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

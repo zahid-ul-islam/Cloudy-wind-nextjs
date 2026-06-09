@@ -6,12 +6,14 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   closestCorners,
 } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
   SortableContext,
   arrayMove,
@@ -26,6 +28,7 @@ interface KanbanBoardProps {
   columns: Column[];
   tasks: Task[];
   projectId: string;
+  projectKey?: string;
   onCreateTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onTasksUpdate: (tasks: Task[]) => void;
@@ -36,6 +39,7 @@ export default function KanbanBoard({
   columns,
   tasks,
   projectId,
+  projectKey,
   onCreateTask,
   onEditTask,
   onTasksUpdate,
@@ -44,7 +48,7 @@ export default function KanbanBoard({
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 8,
       },
@@ -52,8 +56,11 @@ export default function KanbanBoard({
     useSensor(TouchSensor, {
       activationConstraint: {
         delay: 200,
-        tolerance: 8,
+        tolerance: 5,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -157,6 +164,7 @@ export default function KanbanBoard({
             onCreateTask={() => onCreateTask(column._id)}
             onEditTask={onEditTask}
             currentUserId={currentUserId}
+            projectKey={projectKey}
           />
         ))}
       </div>
@@ -169,7 +177,7 @@ export default function KanbanBoard({
       >
         {activeTask ? (
           <div className="rotate-2 scale-105 shadow-2xl opacity-90 transition-all">
-            <TaskCard task={activeTask} isDragging />
+            <TaskCard task={activeTask} isDragging projectKey={projectKey} />
           </div>
         ) : null}
       </DragOverlay>

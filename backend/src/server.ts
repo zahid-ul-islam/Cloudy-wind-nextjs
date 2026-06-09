@@ -17,6 +17,7 @@ import projectRoutes from "./routes/projects";
 import columnRoutes from "./routes/columns";
 import taskRoutes from "./routes/tasks";
 import inviteRoutes from "./routes/invites";
+import notificationRoutes from "./routes/notifications";
 
 const app: Application = express();
 
@@ -44,6 +45,7 @@ app.get("/", (_req, res) => {
       tasks: "/api/tasks",
       columns: "/api/columns",
       invites: "/api/invites",
+      notifications: "/api/notifications",
     },
   });
 });
@@ -55,6 +57,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/columns", columnRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/invites", inviteRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Error handler
 app.use(errorHandler);

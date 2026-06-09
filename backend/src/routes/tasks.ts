@@ -7,6 +7,8 @@ import {
   deleteTask,
   moveTask,
   reorderTasks,
+  addComment,
+  getTaskActivity,
 } from "../controllers/taskController";
 import { protect } from "../middleware/auth";
 
@@ -28,4 +30,9 @@ router
 router.put("/:id/move", protect, moveTask);
 router.put("/reorder", protect, reorderTasks);
 
+// Comments and activity
+router.post("/:id/comments", protect, addComment);
+router.get("/:id/activity", protect, getTaskActivity);
+
 export default router;
+

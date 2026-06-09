@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
+  role?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +45,40 @@ export interface Column {
   updatedAt: string;
 }
 
+export interface Comment {
+  _id: string;
+  user: User;
+  text: string;
+  createdAt: string;
+}
+
+export interface Activity {
+  _id: string;
+  user: User;
+  action: string;
+  field?: string;
+  oldValue?: string;
+  newValue?: string;
+  createdAt: string;
+}
+
+export interface Notification {
+  _id: string;
+  recipient: string;
+  sender: User;
+  type: "assignment" | "mention" | "system";
+  message: string;
+  task?: string;
+  project?: {
+    _id: string;
+    name: string;
+    key: string;
+  };
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Task {
   _id: string;
   title: string;
@@ -53,9 +88,13 @@ export interface Task {
   assignee?: User;
   reporter: User;
   priority: "low" | "medium" | "high" | "urgent";
+  type: "task" | "bug" | "story" | "epic";
+  taskNumber: number;
   order: number;
   labels?: string[];
   dueDate?: string;
+  comments: Comment[];
+  activity: Activity[];
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +104,7 @@ export interface AuthResponse {
   name: string;
   email: string;
   avatar?: string;
+  role?: string;
   token: string;
   refreshToken: string;
 }

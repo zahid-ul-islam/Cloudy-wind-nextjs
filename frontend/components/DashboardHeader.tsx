@@ -5,13 +5,14 @@ import { useAuth } from "@/context/AuthContext";
 import { LogOut, User, Bell, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
-import { Invitation } from "@/types";
+import { Invitation, Notification } from "@/types";
 
 export default function DashboardHeader() {
   const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [invites, setInvites] = useState<Invitation[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     fetchInvites();
@@ -25,6 +26,40 @@ export default function DashboardHeader() {
       console.error("Failed to fetch invites", error);
     }
   };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await api.get<Notification[]>("/notifications");
+      setNotifications(response.data);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchInvites();
+    fetchNotifications();
+    // Set up polling for notifications every 30 seconds
+    const interval = setInterval(() => {
+      fetchNotifications();
+      fetchInvites();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const markAsRead = async (id: string) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read", error);
+    }
+  };
+
+  const unreadCount =
+    invites.length + notifications.filter((n) => !n.isRead).length;
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -66,9 +101,9 @@ export default function DashboardHeader() {
               className="text-gray-500 hover:text-gray-700 relative focus:outline-none transition-colors"
             >
               <Bell className="h-5 w-5" />
-              {invites.length > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-semibold animate-pulse">
-                  {invites.length}
+                  {unreadCount}
                 </span>
               )}
             </button>
@@ -78,13 +113,14 @@ export default function DashboardHeader() {
                 <div className="px-4 py-2 border-b border-gray-100">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
                 </div>
-                {invites.length === 0 ? (
+                {invites.length === 0 && notifications.length === 0 ? (
                   <div className="px-4 py-8 text-center text-gray-500">
                     <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                     <p className="text-sm">No new notifications</p>
                   </div>
                 ) : (
                   <div className="max-h-96 overflow-y-auto">
+                    {/* Invites */}
                     {invites.map((invite) => (
                       <Link
                         key={invite._id}
@@ -109,6 +145,53 @@ export default function DashboardHeader() {
                           </div>
                         </div>
                       </Link>
+                    ))}
+
+                    {/* Notifications */}
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        onClick={() => {
+                          if (!notification.isRead) markAsRead(notification._id);
+                          setShowNotifications(false);
+                        }}
+                        className={`block px-4 py-3 hover:bg-gray-50 border-b border-gray-50 transition-colors cursor-pointer ${
+                          !notification.isRead ? "bg-blue-50" : ""
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {notification.sender.avatar ? (
+                              <img
+                                src={notification.sender.avatar}
+                                alt={notification.sender.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-5 w-5 text-primary-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-900 line-clamp-2">
+                              <span className="font-semibold">
+                                {notification.sender.name}
+                              </span>{" "}
+                              {notification.message}
+                            </p>
+                            {notification.project && (
+                              <p className="text-xs font-semibold text-primary-600 mt-0.5 truncate">
+                                {notification.project.name}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(notification.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          {!notification.isRead && (
+                            <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2" />
+                          )}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

@@ -1,6 +1,54 @@
 import mongoose, { Schema } from "mongoose";
 import { ITask } from "../types";
 
+const commentSchema = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
+
+const activitySchema = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    action: {
+      type: String,
+      required: true,
+    },
+    field: {
+      type: String,
+    },
+    oldValue: {
+      type: String,
+    },
+    newValue: {
+      type: String,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
+
 const taskSchema = new Schema<ITask>(
   {
     title: {
@@ -38,6 +86,16 @@ const taskSchema = new Schema<ITask>(
       enum: ["low", "medium", "high", "urgent"],
       default: "medium",
     },
+    type: {
+      type: String,
+      enum: ["task", "bug", "story", "epic"],
+      default: "task",
+    },
+    taskNumber: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     order: {
       type: Number,
       required: true,
@@ -53,6 +111,8 @@ const taskSchema = new Schema<ITask>(
       type: Date,
       default: null,
     },
+    comments: [commentSchema],
+    activity: [activitySchema],
   },
   {
     timestamps: true,
@@ -62,6 +122,7 @@ const taskSchema = new Schema<ITask>(
 // Ensure tasks are ordered within a column
 taskSchema.index({ column: 1, order: 1 });
 taskSchema.index({ project: 1 });
+taskSchema.index({ project: 1, taskNumber: 1 }, { unique: true });
 
 const Task = mongoose.model<ITask>("Task", taskSchema);
 

@@ -34,6 +34,7 @@ export const taskSchema = z.object({
   column: z.string().min(1, "Column is required"),
   assignee: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+  type: z.enum(["task", "bug", "story", "epic"]).default("task"),
   labels: z.array(z.string()).optional(),
   dueDate: z.string().optional(),
 });

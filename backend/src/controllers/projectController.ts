@@ -23,7 +23,19 @@ export const getProjects = async (
     const { teamId } = req.query;
 
     if (!teamId) {
-      res.status(400).json({ message: "Team ID required" });
+      // Find all teams where user is a member
+      const userTeams = await Team.find({
+        "members.user": authReq.user?._id,
+      });
+      const teamIds = userTeams.map((t) => t._id);
+
+      // Find all projects belonging to those teams
+      const projects = await Project.find({ team: { $in: teamIds } })
+        .populate("createdBy", "name email avatar")
+        .populate("team", "name")
+        .sort("-createdAt");
+
+      res.json(projects);
       return;
     }
 

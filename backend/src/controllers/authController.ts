@@ -56,6 +56,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        role: user.role,
         token,
         refreshToken,
       });
@@ -87,6 +88,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        role: user.role,
         token,
         refreshToken,
       });
@@ -130,6 +132,9 @@ export const updateProfile = async (
       if (req.body.avatar !== undefined) {
         user.avatar = req.body.avatar;
       }
+      if (req.body.role !== undefined) {
+        user.role = req.body.role;
+      }
       if (req.body.password) {
         user.password = req.body.password;
       }
@@ -144,6 +149,7 @@ export const updateProfile = async (
         name: updatedUser.name,
         email: updatedUser.email,
         avatar: updatedUser.avatar,
+        role: updatedUser.role,
         token,
         refreshToken,
       });

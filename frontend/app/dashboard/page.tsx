@@ -4,38 +4,50 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Users, FolderKanban, Plus, X } from "lucide-react";
+import { Users, FolderKanban, Plus, X, Mail, Check } from "lucide-react";
 import api from "@/lib/api";
-import { Team } from "@/types";
+import { Team, Project, Invitation } from "@/types";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [invites, setInvites] = useState<Invitation[]>([]);
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (showProjectModal) {
-      fetchTeams();
-    }
-  }, [showProjectModal]);
+    fetchDashboardData();
+  }, []);
 
-  const fetchTeams = async () => {
+  const fetchDashboardData = async () => {
+    setIsLoadingData(true);
     try {
-      const response = await api.get<Team[]>("/teams");
-      setTeams(response.data);
-      if (response.data.length > 0) {
-        setSelectedTeamId(response.data[0]._id);
+      const [teamsRes, projectsRes, invitesRes] = await Promise.all([
+        api.get<Team[]>("/teams"),
+        api.get<Project[]>("/projects"),
+        api.get<Invitation[]>("/invites"),
+      ]);
+      setTeams(teamsRes.data);
+      setProjects(projectsRes.data);
+      setInvites(invitesRes.data);
+      if (teamsRes.data.length > 0 && !selectedTeamId) {
+        setSelectedTeamId(teamsRes.data[0]._id);
       }
     } catch (err) {
-      console.error("Failed to fetch teams", err);
+      console.error("Failed to fetch dashboard data", err);
+    } finally {
+      setIsLoadingData(false);
     }
   };
+
+
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,21 +131,133 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-12 card bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome to Cloudy Wind, {user?.name?.split(" ")[0]}! 👋
-          </h2>
-          <p className="text-gray-700 mb-4">
-            Get started by creating your first team or joining an existing one.
-            Then, create projects and start managing tasks with our intuitive
-            Kanban boards.
-          </p>
-          <Link
-            href="/dashboard/teams/new"
-            className="btn btn-primary inline-flex"
-          >
-            Create Your First Team
-          </Link>
+        <div className="mt-12">
+          {isLoadingData ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {/* Pending Invites Section */}
+              {invites.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-gray-900">Pending Invitations</h2>
+                    <Link href="/dashboard/invites" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                      View All
+                    </Link>
+                  </div>
+                  <div className="space-y-4">
+                    {invites.slice(0, 3).map((invite) => (
+                      <div
+                        key={invite._id}
+                        className="bg-white rounded-lg border border-primary-200 p-4 shadow-sm flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
+                            <Mail className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              Invitation to {invite.team.name}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Invited by <span className="font-medium">{invite.inviter.name}</span> as <span className="capitalize">{invite.role}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <Link href="/dashboard/invites" className="btn btn-primary py-1.5 px-3 text-sm flex items-center">
+                          Review
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Recent Projects Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Recent Projects</h2>
+                </div>
+                {projects.length > 0 ? (
+                  <div className="space-y-4">
+                    {projects.slice(0, 5).map((project) => (
+                      <Link
+                        key={project._id}
+                        href={`/dashboard/projects/${project._id}`}
+                        className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-primary-300 hover:shadow-md transition-all"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                              {project.description || "No description"}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded">
+                            {project.key}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg border border-dashed border-gray-300 p-8 text-center">
+                    <FolderKanban className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 mb-4">You haven't created any projects yet.</p>
+                    <button
+                      onClick={() => setShowProjectModal(true)}
+                      className="btn btn-primary text-sm"
+                    >
+                      Create Project
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Your Teams Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Your Teams</h2>
+                  <Link href="/dashboard/teams" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                    View All
+                  </Link>
+                </div>
+                {teams.length > 0 ? (
+                  <div className="space-y-4">
+                    {teams.slice(0, 5).map((team) => (
+                      <Link
+                        key={team._id}
+                        href={`/dashboard/teams/${team._id}`}
+                        className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-primary-300 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                            {team.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{team.name}</h3>
+                            <p className="text-sm text-gray-500">{team.members?.length || 0} members</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg border border-dashed border-gray-300 p-8 text-center">
+                    <Users className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 mb-4">You are not part of any team yet.</p>
+                    <Link href="/dashboard/teams/new" className="btn btn-primary text-sm inline-block">
+                      Create Team
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+            </div>
+          )}
         </div>
       </main>
 

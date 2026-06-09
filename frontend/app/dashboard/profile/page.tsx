@@ -5,30 +5,76 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { Loader2, Camera, Save } from "lucide-react";
 
+const compressImage = (
+  file: File,
+  maxWidth = 300,
+  maxHeight = 300,
+  quality = 0.7
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
+
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [role, setRole] = useState(user?.role || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
+      try {
+        const compressed = await compressImage(file, 300, 300, 0.7);
+        setAvatar(compressed);
+      } catch {
         setMessage({
           type: "error",
-          text: "Image size should be less than 5MB",
+          text: "Failed to process image. Try a different file.",
         });
-        return;
       }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -38,12 +84,17 @@ export default function ProfilePage() {
     setMessage({ type: "", text: "" });
 
     try {
-      await api.put("/auth/profile", {
+      const response = await api.put("/auth/profile", {
         name,
         email,
+        role,
         avatar,
       });
 
+      // Update auth context and local storage with new user data
+      const { token, refreshToken, ...userData } = response.data;
+      updateUser(userData);
+      
       setMessage({ type: "success", text: "Profile updated successfully" });
     } catch (error: any) {
       setMessage({

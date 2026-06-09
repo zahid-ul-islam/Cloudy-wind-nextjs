@@ -15,6 +15,7 @@ interface ColumnProps {
   onCreateTask: () => void;
   onEditTask: (task: Task) => void;
   currentUserId?: string;
+  projectKey?: string;
 }
 
 export default function ColumnComponent({
@@ -23,6 +24,7 @@ export default function ColumnComponent({
   onCreateTask,
   onEditTask,
   currentUserId,
+  projectKey,
 }: ColumnProps) {
   const { setNodeRef } = useDroppable({
     id: column._id,
@@ -58,6 +60,7 @@ export default function ColumnComponent({
                 task={task}
                 onClick={() => onEditTask(task)}
                 currentUserId={currentUserId}
+                projectKey={projectKey}
               />
             ))}
           </SortableContext>
